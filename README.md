@@ -123,3 +123,10 @@ I, **Vamshi Krishna**, hereby declare that this project is my original work deve
 
 ## Conclusion
 This project demonstrates practical knowledge of cybersecurity concepts, automated vulnerability analysis, backend API development, frontend integration, and accessibility enhancements through voice-based output. It fulfills all requirements of a Final Year Engineering Project.
+
+## License
+
+This project is licensed under the MIT License.
+
+© 2026 Ayyavari Vamshi Krishna. All rights reserved.
+
