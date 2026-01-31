@@ -104,6 +104,19 @@ git add .
 git commit -m "Update project"  
 git push  
 
+## 🎥 Project Demo Video
+
+A complete working demonstration of this project is available here:
+
+📌 **Click to view demo video:**  
+🔗 https://drive.google.com/file/d/1RHoRDzOMD8npzMwlfg2A4_ze8RiKGJ-I/view?usp=sharing
+
+This video shows:
+- URL-based vulnerability scanning
+- Risk analysis and severity levels
+- Remediation suggestions
+- Voice-based output
+
 ---
 
 ## 👤 Project Author / Credits
