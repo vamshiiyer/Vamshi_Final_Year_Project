@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import nmap
 import requests
-import uvicorn
+import nmap
 from urllib.parse import urlparse
+import uvicorn
 
-app = FastAPI()
+app = FastAPI(title="Automated Vulnerability Assessment")
 
 app.add_middleware(
     CORSMiddleware,
@@ -14,73 +14,104 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def get_accurate_score(url):
+SECURITY_CHECKS = {
+    "content-security-policy": ("Missing Content Security Policy", "HIGH", 20),
+    "strict-transport-security": ("HSTS not enabled", "HIGH", 20),
+    "x-frame-options": ("Clickjacking protection missing", "MEDIUM", 10),
+    "x-content-type-options": ("MIME sniffing protection missing", "LOW", 5),
+    "referrer-policy": ("Referrer policy missing", "LOW", 5),
+    "permissions-policy": ("Permissions Policy missing", "LOW", 5),
+}
+
+def analyze_headers(url):
     findings = []
-    points = 100
-    
+    score = 100
+
     try:
-        # Use a real browser User-Agent to avoid being blocked
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-        response = requests.get(url, headers=headers, timeout=10, allow_redirects=True)
-        h = {k.lower(): v for k, v in response.headers.items()}
+        r = requests.get(
+            url,
+            timeout=10,
+            allow_redirects=True,
+            headers={"User-Agent": "Mozilla/5.0 SecurityScanner"}
+        )
 
-        # 1. CSP Check (Modern sites like GitHub use this extensively)
-        if 'content-security-policy' in h:
-            pass # Keep points
-        else:
-            findings.append({"name": "Missing CSP", "severity": "CRITICAL", "impact": "Vulnerable to XSS.", "solution": "Implement Content-Security-Policy."})
-            points -= 25
+        headers = {k.lower(): v for k, v in r.headers.items()}
 
-        # 2. HSTS / HTTPS Enforcement
-        if 'strict-transport-security' in h or url.startswith('https'):
-            pass # Standard security met
-        else:
-            findings.append({"name": "Insecure Transport", "severity": "CRITICAL", "impact": "No encryption enforced.", "solution": "Enable HSTS/HTTPS."})
-            points -= 25
+        if not url.startswith("https"):
+            findings.append({
+                "name": "Insecure Transport (HTTP)",
+                "severity": "CRITICAL",
+                "solution": "Enforce HTTPS and enable HSTS"
+            })
+            score -= 30
 
-        # 3. Modern Clickjacking Protection
-        # We check for X-Frame-Options OR the modern 'frame-ancestors' directive in CSP
-        has_clickjacking_protection = 'x-frame-options' in h or ('content-security-policy' in h and 'frame-ancestors' in h['content-security-policy'])
-        
-        if not has_clickjacking_protection:
-            findings.append({"name": "No Clickjacking Defense", "severity": "HIGH", "impact": "UI Redressing risk.", "solution": "Set X-Frame-Options or CSP frame-ancestors."})
-            points -= 20
+        for header, (name, severity, penalty) in SECURITY_CHECKS.items():
+            if header not in headers:
+                findings.append({
+                    "name": name,
+                    "severity": severity,
+                    "solution": f"Configure {header} header"
+                })
+                score -= penalty
 
-        # 4. Server Masking (GitHub hides this, TestPHP leaks it)
-        if 'server' in h and any(char.isdigit() for char in h['server']):
-            findings.append({"name": f"Server Version Leak: {h['server']}", "severity": "MEDIUM", "impact": "Infrastructure disclosure.", "solution": "Hide server version strings."})
-            points -= 15
+        if "server" in headers and any(c.isdigit() for c in headers["server"]):
+            findings.append({
+                "name": "Server Version Disclosure",
+                "severity": "MEDIUM",
+                "solution": "Hide server version information"
+            })
+            score -= 10
 
-    except Exception as e:
-        print(f"Scan Error: {e}")
-        points = 50 # Default score if site is unreachable
+    except Exception:
+        return [{
+            "name": "Target Unreachable",
+            "severity": "CRITICAL",
+            "solution": "Ensure the target is reachable"
+        }], 20
 
-    return findings, max(points, 15)
+    return findings, max(score, 15)
 
-@app.get("/scan")
-async def scan(target: str):
-    if not target.startswith('http'): target = 'http://' + target
-    
-    # Accurate Nmap-style Port Probing
+def scan_ports(target):
     ports = []
     try:
+        host = urlparse(target).hostname
         nm = nmap.PortScanner()
-        host = urlparse(target).netloc
-        nm.scan(host, arguments='-F --connect-timeout 2') 
-        if host in nm.all_hosts() and 'tcp' in nm[host]:
-            ports = [p for p, data in nm[host]['tcp'].items() if data['state'] == 'open']
-    except:
-        ports = [80, 443] if target.startswith('https') else [80]
+        nm.scan(host, arguments="-F --open")
 
-    # Run Analysis
-    findings, final_score = get_accurate_score(target)
+        if host in nm.all_hosts():
+            for proto in nm[host].all_protocols():
+                for port, data in nm[host][proto].items():
+                    if data["state"] == "open":
+                        ports.append(port)
+    except:
+        pass
+
+    return ports
+
+@app.get("/scan")
+def scan(target: str):
+    if not target.startswith("http"):
+        target = "http://" + target
+
+    findings, score = analyze_headers(target)
+    ports = scan_ports(target)
+
+    risk = (
+        "CRITICAL" if score < 30 else
+        "HIGH" if score < 60 else
+        "LOW"
+    )
 
     return {
-        "score": final_score,
-        "findings": findings,
+        "target": target,
+        "score": score,
+        "risk_level": risk,
         "ports": ports,
-        "owner": "Vamshi Krishna"
+        "findings": findings,
+        "assessment_type": "Passive + Semi-Active (OWASP Aligned)"
     }
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
