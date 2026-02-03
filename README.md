@@ -47,37 +47,7 @@ Additional Features:
 7. Vulnerability findings are also provided through voice output.
 8. A download option for security reports will be added in future updates.
 
----
 
-## Project Structure
-Vamshi_Final_Year_Project/
-├── backend/
-│   └── main.py
-├── frontend/
-│   └── src/
-└── README.md
-
----
-
-## How to Run the Project
-
-Backend Setup:
-cd backend  
-pip install -r requirements.txt  
-uvicorn main:app --reload  
-
-Backend URL:
-http://127.0.0.1:8000
-
-Frontend Setup:
-cd frontend  
-npm install  
-npm start  
-
-Frontend URL:
-http://localhost:3000
-
----
 
 ## Key Features
 - Automated vulnerability assessment
@@ -96,28 +66,6 @@ Purpose: Academic Submission
 
 ---
 
-## GitHub Update Instructions
-Changes made in VS Code do not update GitHub automatically.
-
-After any change, run:
-git add .  
-git commit -m "Update project"  
-git push  
-
-## 🎥 Project Demo Video
-
-A complete working demonstration of this project is available here:
-
-📌 **Click to view demo video:**  
-🔗 https://drive.google.com/file/d/1RHoRDzOMD8npzMwlfg2A4_ze8RiKGJ-I/view?usp=sharing
-
-This video shows:
-- URL-based vulnerability scanning
-- Risk analysis and severity levels
-- Remediation suggestions
-- Voice-based output
-
----
 
 ## 👤 Project Author / Credits
 
