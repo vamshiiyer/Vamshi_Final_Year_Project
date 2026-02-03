@@ -61,7 +61,7 @@ Additional Features:
 
 ## Academic Information
 Project Title: Automated Vulnerability Assessment and Security Analysis  
-Degree: Engineering (Final Year)  
+BTech: Computer Science & Engineering (Final Year)  
 Purpose: Academic Submission  
 
 ---
