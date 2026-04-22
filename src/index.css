@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-white font-mono antialiased overflow-x-hidden;
+  }
+}
+
+/* Custom laser parsing animation */
+@keyframes scanning {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+.laser-beam {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: theme('colors.accent');
+  box-shadow: 0 0 15px theme('colors.accent'), 0 0 30px theme('colors.accent');
+  animation: scanning 2s linear infinite;
+  z-index: 50;
+  pointer-events: none;
+}
